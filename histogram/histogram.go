@@ -3,6 +3,8 @@ package histogram
 import (
 	"log"
 	"math"
+
+	"github.com/mkmik/argsort"
 )
 
 // Histogram holds a count of values partionned over buckets.
@@ -114,6 +116,47 @@ func PowerHist(power float64, input []float64) Histogram {
 	return Histogram{
 		Min:     minC,
 		Max:     maxC,
+		Count:   len(input),
+		Buckets: buckets,
+	}
+}
+
+// EqualBucketHist creates an histogram partionning input over `bins` buckets with equal count per bucket.
+func EqualBucketHist(bins int, input []float64) Histogram {
+	if len(input) == 0 || bins == 0 {
+		return Histogram{}
+	}
+	countPerBucket := float64(len(input)) / float64(bins)
+	minCount := int(countPerBucket)
+	maxCount := minCount + 1
+	if countPerBucket == float64(minCount) {
+		maxCount = minCount
+	}
+	sorted := argsort.SortSlice(input, func(i, j int) bool { return input[i] < input[j] })
+	buckets := make([]Bucket, bins)
+	cumCounts := 0
+	for i := 0; i < bins; i++ {
+		var count int
+		if i < bins-1 {
+			count = int(countPerBucket*float64(i+1)) - cumCounts
+			buckets[i] = Bucket{
+				Count: count,
+				Min:   input[sorted[cumCounts]],
+				Max:   input[sorted[cumCounts+count]],
+			}
+		} else {
+			count = len(input) - cumCounts
+			buckets[i] = Bucket{
+				Count: count,
+				Min:   input[sorted[cumCounts]],
+				Max:   input[sorted[len(input)-1]],
+			}
+		}
+		cumCounts = cumCounts + count
+	}
+	return Histogram{
+		Min:     minCount,
+		Max:     maxCount,
 		Count:   len(input),
 		Buckets: buckets,
 	}
