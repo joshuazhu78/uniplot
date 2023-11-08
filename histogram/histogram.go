@@ -136,21 +136,11 @@ func EqualBucketHist(bins int, input []float64) Histogram {
 	buckets := make([]Bucket, bins)
 	cumCounts := 0
 	for i := 0; i < bins; i++ {
-		var count int
-		if i < bins-1 {
-			count = int(countPerBucket*float64(i+1)) - cumCounts
-			buckets[i] = Bucket{
-				Count: count,
-				Min:   input[sorted[cumCounts]],
-				Max:   input[sorted[cumCounts+count]],
-			}
-		} else {
-			count = len(input) - cumCounts
-			buckets[i] = Bucket{
-				Count: count,
-				Min:   input[sorted[cumCounts]],
-				Max:   input[sorted[len(input)-1]],
-			}
+		count := int(countPerBucket*float64(i+1)) - cumCounts
+		buckets[i] = Bucket{
+			Count: count,
+			Min:   input[sorted[cumCounts]],
+			Max:   input[sorted[cumCounts+count-1]],
 		}
 		cumCounts = cumCounts + count
 	}
